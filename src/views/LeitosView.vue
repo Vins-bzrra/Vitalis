@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { QrCode, BedDouble } from 'lucide-vue-next'
+import { BedDouble, Printer } from 'lucide-vue-next'
+import { gerarQrLeito, urlDoLeito } from '@/utils/qrLeito'
 import { useInstitucionalStore } from '@/stores/institucional'
 import { usePacienteStore } from '@/stores/paciente'
 import UiCard from '@/components/ui/UiCard.vue'
@@ -21,6 +22,14 @@ onMounted(() => {
 })
 
 const leitoSelecionado = ref<Leito | null>(null)
+const qrSelecionado = ref('')
+watch(leitoSelecionado, async (l) => {
+  qrSelecionado.value = l ? await gerarQrLeito(l.numero) : ''
+})
+
+function imprimirEtiquetas(query: Record<string, string>) {
+  router.push({ path: '/leitos/etiquetas', query })
+}
 
 const porSetor = computed(() => {
   const grupos = new Map<string, Leito[]>()
@@ -56,9 +65,10 @@ function irParaPaciente() {
   <div class="leitos">
     <header class="leitos__header">
       <div>
-        <p class="leitos__eyebrow">Gestão de internação</p>
+        <p class="leitos__eyebrow">Gestão de leitos</p>
         <h1>Leitos & Ocupação</h1>
       </div>
+      <UiButton variant="secondary" @click="imprimirEtiquetas({})"><template #icon><Printer :size="15" /></template> Imprimir etiquetas QR</UiButton>
       <div class="leitos__legend">
         <span v-for="s in Object.keys(statusLabel)" :key="s" class="leitos__legend-item">
           <span class="dot" :class="`is-${s}`" /> {{ statusLabel[s as Leito['status']] }}
@@ -67,6 +77,9 @@ function irParaPaciente() {
     </header>
 
     <UiCard v-for="[setor, leitos] in porSetor" :key="setor" :title="setor" :subtitle="`${leitos.filter(l => l.status === 'ocupado').length} de ${leitos.length} leitos ocupados`">
+      <template #actions>
+        <UiButton size="sm" variant="ghost" @click="imprimirEtiquetas({ setor })"><template #icon><Printer :size="14" /></template> Etiquetas do setor</UiButton>
+      </template>
       <div class="leitos-grid">
         <button v-for="l in leitos" :key="l.id" class="leito-card" :class="`is-${l.status}`" @click="abrirLeito(l)">
           <BedDouble :size="18" />
@@ -89,9 +102,11 @@ function irParaPaciente() {
           <UiButton v-if="pacienteDoLeito(leitoSelecionado)" size="sm" @click="irParaPaciente">Abrir prontuário do paciente</UiButton>
         </div>
         <div class="leito-detail__qr">
-          <div class="qr-placeholder"><QrCode :size="72" /></div>
-          <p>QR Code do leito (protótipo visual)</p>
-          <small>Ao escanear, um profissional autorizado e autenticado poderá acessar rapidamente o paciente associado a este leito. O QR Code não substitui autenticação.</small>
+          <img v-if="qrSelecionado" :src="qrSelecionado" class="qr-img" :alt="`QR Code do leito ${leitoSelecionado.numero}`">
+          <p>QR Code do leito {{ leitoSelecionado.numero }}</p>
+          <small>Imprima e cole no leito. Ao escanear, o profissional faz login e cai direto no prontuário de quem estiver neste leito.</small>
+          <code class="qr-url">{{ urlDoLeito(leitoSelecionado.numero) }}</code>
+          <UiButton size="sm" variant="secondary" @click="imprimirEtiquetas({ leito: leitoSelecionado.numero })"><template #icon><Printer :size="14" /></template> Imprimir etiqueta</UiButton>
         </div>
       </div>
     </UiModal>
@@ -133,7 +148,9 @@ function irParaPaciente() {
 .dl { display: flex; flex-direction: column; gap: var(--space-3); }
 .dl dt { font-size: 11px; text-transform: uppercase; color: var(--color-ink-faint); font-weight: 700; margin-bottom: 3px; }
 .dl dd { font-size: 13.5px; }
-.leito-detail__qr { text-align: center; width: 180px; }
+.leito-detail__qr { text-align: center; width: 200px; display: flex; flex-direction: column; align-items: center; }
+.qr-img { width: 150px; height: 150px; margin: 0 auto var(--space-2); display: block; }
+.qr-url { display: block; font-size: 10px; color: var(--color-ink-faint); word-break: break-all; margin: 6px 0 10px; }
 .qr-placeholder { width: 120px; height: 120px; margin: 0 auto var(--space-2); border: 2px dashed var(--color-border-strong); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--color-ink-faint); }
 .leito-detail__qr p { font-size: 12px; font-weight: 600; }
 .leito-detail__qr small { font-size: 10.5px; color: var(--color-ink-faint); line-height: 1.5; display: block; margin-top: 4px; }

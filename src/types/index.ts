@@ -120,6 +120,12 @@ export interface Paciente {
   naturalidade?: string
   profissao?: string
   numeroProntuario: string
+  /**
+   * Código curto e único do paciente na instituição (equivalente ao "RG do
+   * hospital" citado pela usuária — não confundir com o RG civil). Usado para
+   * localizar o paciente rapidamente no painel, na busca e nas etiquetas.
+   */
+  codigoPaciente?: string
   telefone: string
   telefoneSecundario?: string
   email?: string
@@ -206,6 +212,38 @@ export interface EvolucaoMedica {
   conduta: string
   planoTerapeutico: string
   encaminhamentos?: string[]
+}
+
+// Evolução em texto livre: cada médico escreve na ordem e no formato da sua
+// especialidade, opcionalmente partindo de um modelo (ver ModeloEvolucao).
+export interface EvolucaoLivre {
+  id: string
+  data: string
+  hora: string
+  profissional: string
+  especialidade?: string
+  texto: string
+}
+
+export interface ModeloEvolucao {
+  id: string
+  nome: string
+  especialidade: string
+  texto: string
+  proprio?: boolean
+}
+
+export interface ItemReceita {
+  medicamento: string
+  posologia: string
+  quantidade: string
+}
+
+export interface ModeloReceita {
+  id: string
+  nome: string
+  itens: ItemReceita[]
+  orientacoes?: string
 }
 
 export interface EvolucaoEnfermagem {
@@ -418,12 +456,17 @@ export interface Atendimento {
   status: StatusAtendimento
   setor: string
   motivoEntrada: string
+  /** Especialidade para a qual a avaliação foi solicitada (clínica médica, cirurgia, cardiologia...). */
+  especialidadeSolicitada?: string
+  /** Atendimento prioritário por lei (idoso, gestante, PcD...). Idosos 60+ são detectados automaticamente. */
+  prioridade?: string
   queixaPrincipal: string
   historiaDoencaAtual: string
   acolhimento?: Acolhimento
   timeline: EventoTimeline[]
   triagens: Triagem[]
   evolucoesMedicas: EvolucaoMedica[]
+  evolucoesLivres?: EvolucaoLivre[]
   evolucoesEnfermagem: EvolucaoEnfermagem[]
   diagnosticos: Diagnostico[]
   prescricoes: Prescricao[]

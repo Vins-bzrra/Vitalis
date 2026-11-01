@@ -18,12 +18,17 @@ import PatientSearchBox from '@/components/clinical/PatientSearchBox.vue'
 import ResponsiveDataTable, { type DataTableColumn } from '@/components/ui/ResponsiveDataTable.vue'
 import { STATUS_ATENDIMENTO_META, TIPO_ATENDIMENTO_META } from '@/composables/useClinicalMeta'
 import { formatarDataHora } from '@/utils/formatters'
+import { usePreferenciasStore, priorizarPorSetor } from '@/stores/preferencias'
 
 const pacienteStore = usePacienteStore()
 const fluxo = useAtendimentoFluxoStore()
 const auth = useAuthStore()
 const router = useRouter()
 const { institucional, linhasBase, etapaDe, abrirProntuario, acaoPrincipal, rotuloAcao, HOJE } = useFilaAtendimento()
+
+const prefs = usePreferenciasStore()
+prefs.sincronizar()
+const somenteMeus = ref(prefs.prefs.somenteMeusSetores)
 
 const aba = ref<string>('fila')
 const filtroEtapa = ref<'todos' | 'aguardando_triagem' | 'em_triagem' | 'aguardando_medico' | 'em_atendimento'>('todos')
@@ -52,8 +57,11 @@ const cards = computed(() => [
 ])
 
 const linhasFiltradas = computed(() => {
-  if (filtroEtapa.value === 'todos') return linhasBase.value
-  return linhasBase.value.filter((l) => etapaDe(l.atendimento) === filtroEtapa.value)
+  let linhas = linhasBase.value
+  if (filtroEtapa.value !== 'todos') linhas = linhas.filter((l) => etapaDe(l.atendimento) === filtroEtapa.value)
+  if (somenteMeus.value) linhas = linhas.filter((l) => prefs.doMeuSetor(l.atendimento.setor))
+  // Atendimentos dos setores do usuário aparecem primeiro.
+  return priorizarPorSetor(linhas, (l) => l.atendimento.setor, prefs.prefs.setoresPrioritarios)
 })
 
 const columns: DataTableColumn[] = [
@@ -81,7 +89,7 @@ function editarCadastro(pacienteId: string) {
   <div class="recepcao">
     <header class="recepcao__header">
       <div>
-        <p class="eyebrow">Recepção</p>
+        <p class="eyebrow">Fluxo de atendimento</p>
         <h1>Atendimentos</h1>
         <p class="recepcao__subtitle">Busque pacientes, cadastre novos e acompanhe a fila de acolhimento e triagem.</p>
       </div>
@@ -130,6 +138,7 @@ function editarCadastro(pacienteId: string) {
         >
           {{ opt.label }}
         </button>
+        <label v-if="prefs.temPrioridade" class="meus-toggle"><input v-model="somenteMeus" type="checkbox"> Só meus setores</label>
       </div>
 
       <UiCard :padded="false">
@@ -144,7 +153,10 @@ function editarCadastro(pacienteId: string) {
               {{ STATUS_ATENDIMENTO_META[(row as LinhaFila).atendimento.status].label }}
             </UiBadge>
           </template>
-          <template #cell-setor="{ row }">{{ (row as LinhaFila).atendimento.setor }}</template>
+          <template #cell-setor="{ row }">
+            {{ (row as LinhaFila).atendimento.setor }}
+            <UiBadge v-if="prefs.doMeuSetor((row as LinhaFila).atendimento.setor)" tone="primary" size="sm">Meu setor</UiBadge>
+          </template>
           <template #cell-entrada="{ row }">{{ formatarDataHora((row as LinhaFila).atendimento.dataEntrada) }}</template>
           <template #actions="{ row }">
             <UiButton size="sm" variant="secondary" @click="acaoPrincipal(row as LinhaFila)">
@@ -203,6 +215,7 @@ function editarCadastro(pacienteId: string) {
 }
 .filter-chip.is-active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
 
+.meus-toggle { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--color-ink-soft); cursor: pointer; margin-left: auto; }
 .recepcao__fila { display: flex; flex-direction: column; gap: var(--space-3); }
 .table-patient { display: flex; align-items: center; gap: 10px; }
 

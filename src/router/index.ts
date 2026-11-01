@@ -15,6 +15,13 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      // Folha de impressão das etiquetas QR — fora do layout para imprimir limpa.
+      path: '/leitos/etiquetas',
+      name: 'leitos-etiquetas',
+      component: () => import('@/views/EtiquetasLeitosView.vue'),
+      meta: { perm: 'leitos.view', recurso: 'a impressão de etiquetas de leito' },
+    },
+    {
       path: '/',
       component: () => import('@/layouts/AppShell.vue'),
       children: [
@@ -73,15 +80,14 @@ const router = createRouter({
           meta: { perm: 'clinical.record.view', recurso: 'o prontuário clínico' },
           children: [
             { path: '', name: 'paciente-visao-geral', component: () => import('@/views/paciente/PacienteVisaoGeral.vue') },
-            { path: 'atendimento', name: 'paciente-atendimento', component: () => import('@/views/paciente/PacienteAtendimento.vue') },
-            { path: 'triagem', name: 'paciente-triagem', component: () => import('@/views/paciente/PacienteTriagem.vue') },
             { path: 'evolucoes', name: 'paciente-evolucoes', component: () => import('@/views/paciente/PacienteEvolucoes.vue') },
-            { path: 'exames', name: 'paciente-exames', component: () => import('@/views/paciente/PacienteExames.vue') },
-            { path: 'prescricoes', name: 'paciente-prescricoes', component: () => import('@/views/paciente/PacientePrescricoes.vue') },
-            { path: 'medicamentos', name: 'paciente-medicamentos', component: () => import('@/views/paciente/PacienteMedicamentos.vue') },
+            { path: 'prescricao', name: 'paciente-prescricao', component: () => import('@/views/paciente/PacientePrescricaoAba.vue') },
+            { path: 'receita', name: 'paciente-receita', component: () => import('@/views/paciente/PacienteReceita.vue') },
             { path: 'documentos', name: 'paciente-documentos', component: () => import('@/views/paciente/PacienteDocumentos.vue') },
-            { path: 'internacao', name: 'paciente-internacao', component: () => import('@/views/paciente/PacienteInternacao.vue') },
             { path: 'historico', name: 'paciente-historico', component: () => import('@/views/paciente/PacienteHistorico.vue') },
+            // Abas antigas foram incorporadas ao Resumo / Prescrição; links antigos continuam funcionando.
+            ...['atendimento', 'triagem', 'exames', 'internacao'].map((path) => ({ path, redirect: (to: { params: Record<string, unknown> }) => `/pacientes/${to.params.id}` })),
+            ...['prescricoes', 'medicamentos'].map((path) => ({ path, redirect: (to: { params: Record<string, unknown> }) => `/pacientes/${to.params.id}/prescricao` })),
           ],
         },
         {
@@ -95,6 +101,14 @@ const router = createRouter({
           name: 'leitos',
           component: () => import('@/views/LeitosView.vue'),
           meta: { perm: 'leitos.view', recurso: 'o mapa de leitos' },
+        },
+        {
+          // Destino do QR Code colado no leito: exige login e acesso clínico,
+          // e redireciona para o prontuário do ocupante atual do leito.
+          path: 'leito/:numero',
+          name: 'leito-acesso',
+          component: () => import('@/views/LeitoAcessoView.vue'),
+          props: true,
         },
         { path: 'atendimentos', name: 'atendimentos', component: () => import('@/views/AtendimentosView.vue') },
         {

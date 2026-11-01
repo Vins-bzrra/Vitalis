@@ -41,16 +41,15 @@ async function carregar() {
 const paciente = computed(() => store.pacienteAtual)
 const atendimento = computed(() => store.atendimentoAtual)
 
+// Página do paciente enxuta: o "Resumo" concentra tudo (queixa, sinais
+// vitais, última evolução, prescrição ativa, exames, internação). As demais
+// abas existem só para registrar ou consultar o histórico completo.
 const tabs = computed(() => [
-  { key: `/pacientes/${props.id}`, label: 'Visão geral' },
-  { key: `/pacientes/${props.id}/atendimento`, label: 'Atendimento atual' },
-  { key: `/pacientes/${props.id}/triagem`, label: 'Triagem' },
+  { key: `/pacientes/${props.id}`, label: 'Resumo', badge: atendimento.value?.exames.filter(e => e.status === 'resultado_critico').length || undefined },
   { key: `/pacientes/${props.id}/evolucoes`, label: 'Evoluções' },
-  { key: `/pacientes/${props.id}/exames`, label: 'Exames', badge: atendimento.value?.exames.filter(e => e.status === 'resultado_critico').length || undefined },
-  { key: `/pacientes/${props.id}/prescricoes`, label: 'Prescrições' },
-  { key: `/pacientes/${props.id}/medicamentos`, label: 'Medicamentos' },
+  { key: `/pacientes/${props.id}/prescricao`, label: 'Prescrição' },
+  { key: `/pacientes/${props.id}/receita`, label: 'Receita para casa' },
   { key: `/pacientes/${props.id}/documentos`, label: 'Documentos' },
-  { key: `/pacientes/${props.id}/internacao`, label: 'Internação/Leito' },
   { key: `/pacientes/${props.id}/historico`, label: 'Histórico' },
 ])
 
@@ -75,6 +74,7 @@ const abaAtiva = computed({
             (nasc. {{ formatarData(paciente.dataNascimento) }}) · CPF {{ paciente.cpf }}
           </p>
           <p class="pac__meta">
+            <template v-if="paciente.codigoPaciente">Código <strong class="mono-num pac__cod">{{ paciente.codigoPaciente }}</strong> · </template>
             Prontuário <strong class="mono-num">{{ paciente.numeroProntuario }}</strong> ·
             Cartão SUS <span class="mono-num">{{ paciente.cartaoSus }}</span>
           </p>
@@ -139,6 +139,7 @@ const abaAtiva = computed({
 .pac__name { font-size: 22px; }
 .pac__meta { font-size: 12.5px; color: var(--color-ink-soft); margin-top: 4px; }
 .pac__meta strong { color: var(--color-ink); font-weight: 600; }
+.pac__meta .pac__cod { color: var(--color-primary-dark); font-weight: 700; }
 
 .pac__status { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-3); }
 .pac__status-grid { display: grid; grid-template-columns: repeat(2, auto); gap: 4px 20px; text-align: right; }

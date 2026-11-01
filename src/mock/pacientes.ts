@@ -583,3 +583,23 @@ export const HISTORICO_ANTERIOR: Record<string, { id: string; ano: number; data:
     { id: 'hist-021', ano: 2024, data: '2024-08-14', tipo: 'Emergência', titulo: 'Crise asmática moderada', setor: 'Emergência', status: 'Alta no mesmo dia' },
   ],
 }
+
+// ===========================================================================
+// Código do paciente, especialidade solicitada e prioridade legal (painel de urgência/emergência)
+// ===========================================================================
+
+const CODIGO_PACIENTE: Record<string, string> = {
+  'pac-001': '104481', 'pac-002': '104482', 'pac-003': '104390', 'pac-004': '104501',
+  'pac-005': '104455', 'pac-006': '104402', 'pac-007': '104410', 'pac-008': '104499',
+}
+PACIENTES.forEach((p) => { p.codigoPaciente = CODIGO_PACIENTE[p.id] })
+
+const ESPECIALIDADE_SOLICITADA: Record<string, string> = {
+  'atd-001': 'Clínica Médica', 'atd-002': 'Cardiologia', 'atd-003': 'Pediatria', 'atd-004': 'Clínica Médica',
+  'atd-005': 'Cirurgia Geral', 'atd-006': 'Cirurgia Geral', 'atd-007': 'Clínica Médica', 'atd-008': 'Clínica Médica',
+}
+ATENDIMENTOS.forEach((a) => { a.especialidadeSolicitada = ESPECIALIDADE_SOLICITADA[a.id] })
+
+// Prioridades legais registradas na recepção (idosos 60+ são inferidos pela idade).
+const PRIORIDADE: Record<string, string> = { 'atd-003': 'Criança de colo' }
+ATENDIMENTOS.forEach((a) => { if (PRIORIDADE[a.id]) a.prioridade = PRIORIDADE[a.id] })

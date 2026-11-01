@@ -31,6 +31,7 @@ export const pacienteService = {
       p.nome.toLowerCase().includes(alvo) ||
       p.cpf.includes(alvo) ||
       p.numeroProntuario.toLowerCase().includes(alvo) ||
+      (p.codigoPaciente ?? '').toLowerCase().includes(alvo) ||
       p.cartaoSus.includes(alvo) ||
       p.dataNascimento.includes(alvo) ||
       (p.leitoAtual ?? '').toLowerCase().includes(alvo) ||

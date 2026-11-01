@@ -74,10 +74,10 @@ export const DASHBOARD_CONFIG_POR_PERFIL: Record<PerfilUsuario, DashboardRoleCon
   },
   medico: {
     titulo: 'Painel clínico',
-    subtitulo: 'Pacientes, exames e pendências sob sua responsabilidade',
+    subtitulo: 'Seus pacientes, exames e pendências',
     statKeys: ['aguardandoAtendimento', 'emAtendimento', 'examesPendentes', 'examesCriticos', 'prescricoesPendentes'],
     mostrarAlertasClinicos: true,
-    mostrarOcupacaoLeitos: true,
+    mostrarOcupacaoLeitos: false,
     mostrarListaPacientes: true,
     tituloListaPacientes: 'Pacientes em atendimento',
   },

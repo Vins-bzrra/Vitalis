@@ -28,7 +28,7 @@ const TODOS_OS_ITENS = [
   { to: '/atendimentos', label: 'Atendimentos', icon: ClipboardList, perm: null },
   { to: '/pacientes', label: 'Pacientes', icon: Users, perm: 'paciente.ver' },
   { to: '/triagem', label: 'Triagem', icon: Stethoscope, perm: 'triage.view', destaque: true },
-  { to: '/leitos', label: 'Leitos & Internação', icon: BedDouble, perm: 'leitos.view' },
+  { to: '/leitos', label: 'Leitos', icon: BedDouble, perm: 'leitos.view' },
   { to: '/exames', label: 'Exames', icon: FlaskConical, perm: 'exames.global.view' },
   { to: '/farmacia', label: 'Farmácia', icon: PillBottle, perm: 'farmacia.view' },
   { to: '/usuarios', label: 'Usuários', icon: ShieldCheck, perm: 'usuarios.view' },

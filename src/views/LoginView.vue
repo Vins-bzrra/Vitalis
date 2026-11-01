@@ -23,7 +23,7 @@ async function entrar() {
 
 async function entrarComoPerfil(perfil: PerfilUsuario) {
   const ok = await auth.loginComoPerfil(perfil)
-  if (ok) router.push('/dashboard')
+  if (ok) router.push((route.query.redirect as string) || '/dashboard')
 }
 </script>
 

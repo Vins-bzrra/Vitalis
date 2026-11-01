@@ -26,8 +26,11 @@ export const PERMISSOES: Record<PerfilUsuario, string[]> = {
 
   medico: [
     'paciente.ver', 'clinical.record.view', 'clinical.alerts.view',
-    'prescricao.criar', 'prescricao.ver', 'evolucao.criar', 'exame.solicitar', 'exames.global.view',
-    'alta.criar', 'diagnostico.criar', 'documento.assinar', 'leitos.view', 'triagem.ver_resultado',
+    'prescricao.criar', 'prescricao.ver', 'evolucao.criar', 'exame.solicitar',
+    'alta.criar', 'diagnostico.criar', 'documento.assinar', 'triagem.ver_resultado', 'receita.criar',
+    // Sem 'leitos.view' (gestão de leitos é do NIR/enfermagem/gestão) e sem
+    // 'exames.global.view' (fila do laboratório): o médico vê os exames dentro
+    // da página de cada paciente.
   ],
 
   enfermeiro: [

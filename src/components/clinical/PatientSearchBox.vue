@@ -37,7 +37,7 @@ watch(termo, (valor) => {
       <input
         v-model="termo"
         type="search"
-        placeholder="Digite nome, CPF, cartão SUS, data de nascimento ou número do prontuário"
+        placeholder="Digite código do paciente, nome, CPF, cartão SUS, data de nascimento ou número do prontuário"
         aria-label="Buscar paciente"
       >
     </div>

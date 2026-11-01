@@ -7,18 +7,22 @@ import { usePacienteStore } from '@/stores/paciente'
 import { usePermissions } from '@/composables/usePermissions'
 import { DASHBOARD_CONFIG_POR_PERFIL, DASHBOARD_STATS } from '@/config/dashboardConfig'
 import { rotaProntuario } from '@/utils/patientAccess'
+import { usePreferenciasStore, priorizarPorSetor } from '@/stores/preferencias'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiAvatar from '@/components/ui/UiAvatar.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiEmptyState from '@/components/ui/UiEmptyState.vue'
-import { STATUS_ATENDIMENTO_META, STATUS_EXAME_META } from '@/composables/useClinicalMeta'
-import { calcularIdade, tempoDecorrido } from '@/utils/formatters'
+import PainelPacientes from '@/components/clinical/PainelPacientes.vue'
+import { STATUS_EXAME_META } from '@/composables/useClinicalMeta'
+import { calcularIdade } from '@/utils/formatters'
 
 const institucional = useInstitucionalStore()
 const pacienteStore = usePacienteStore()
 const router = useRouter()
 const { perfil, can } = usePermissions()
+const prefs = usePreferenciasStore()
+prefs.sincronizar()
 
 onMounted(() => {
   institucional.carregarDashboard()
@@ -44,7 +48,7 @@ const mostrarListaPacientes = computed(() => !!config.value?.mostrarListaPacient
 
 const pacientesAtencao = computed(() => {
   if (!mostrarAlertas.value) return []
-  return institucional.atendimentos
+  const lista = institucional.atendimentos
     .map((at) => {
       const paciente = pacienteStore.pacientes.find((p) => p.id === at.pacienteId)
       if (!paciente) return null
@@ -61,6 +65,8 @@ const pacientesAtencao = computed(() => {
       return { paciente, atendimento: at, motivos }
     })
     .filter((v): v is NonNullable<typeof v> => v !== null)
+  // Alertas dos setores do usuário primeiro (ver Configurações).
+  return priorizarPorSetor(lista, (v) => v.paciente.setorAtual, prefs.prefs.setoresPrioritarios)
 })
 
 // Laboratório — resumo de exames críticos/pendentes (só computado quando o
@@ -112,13 +118,17 @@ function abrirPaciente(id: string) {
       </article>
     </section>
 
+    <UiCard v-if="mostrarListaPacientes" :title="config.tituloListaPacientes" subtitle="Internados separados das fichas abertas na urgência/emergência">
+      <PainelPacientes :pacientes="pacienteStore.pacientes" :atendimentos="institucional.atendimentos" @abrir="abrirPaciente" />
+    </UiCard>
+
     <div v-if="mostrarAlertas || mostrarOcupacao" class="dash__grid">
       <UiCard v-if="mostrarAlertas" title="Atenção necessária" subtitle="Pacientes com pendências ou alertas clínicos relevantes" class="dash__attention">
         <template v-if="pacientesAtencao.length">
           <button v-for="item in pacientesAtencao" :key="item.paciente.id" class="attention-row" @click="abrirPaciente(item.paciente.id)">
             <UiAvatar :nome="item.paciente.nome" :size="40" />
             <div class="attention-row__info">
-              <span class="attention-row__name">{{ item.paciente.nome }}</span>
+              <span class="attention-row__name">{{ item.paciente.nome }} <UiBadge v-if="prefs.doMeuSetor(item.paciente.setorAtual)" tone="primary" size="sm">Meu setor</UiBadge></span>
               <span class="attention-row__meta">
                 {{ calcularIdade(item.paciente.dataNascimento) }} anos ·
                 {{ item.paciente.setorAtual }}<template v-if="item.paciente.leitoAtual"> · Leito {{ item.paciente.leitoAtual }}</template>
@@ -176,37 +186,6 @@ function abrirPaciente(id: string) {
       </ul>
     </UiCard>
 
-    <UiCard v-if="mostrarListaPacientes" :title="config.tituloListaPacientes" subtitle="Atualização em tempo real (simulada)">
-      <div class="table-scroll">
-        <table class="dash-table">
-          <thead>
-            <tr>
-              <th>Paciente</th>
-              <th>Status</th>
-              <th>Setor</th>
-              <th>Leito</th>
-              <th>Entrada</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="p in pacienteStore.pacientes" :key="p.id" @click="abrirPaciente(p.id)">
-              <td data-label="Paciente">
-                <div class="table-patient">
-                  <UiAvatar :nome="p.nome" :size="32" />
-                  <span>{{ p.nome }}</span>
-                </div>
-              </td>
-              <td data-label="Status"><UiBadge :tone="STATUS_ATENDIMENTO_META[p.statusAtual].tone as any" size="sm">{{ STATUS_ATENDIMENTO_META[p.statusAtual].label }}</UiBadge></td>
-              <td data-label="Setor">{{ p.setorAtual ?? '—' }}</td>
-              <td data-label="Leito">{{ p.leitoAtual ?? '—' }}</td>
-              <td data-label="Entrada">{{ p.entradaEm ? tempoDecorrido(p.entradaEm) : '—' }}</td>
-              <td><ArrowRight :size="15" /></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </UiCard>
 
     <div v-if="perfil === 'laboratorio' || perfil === 'farmacia'" class="dash__shortcut">
       <UiButton variant="secondary" @click="router.push(perfil === 'laboratorio' ? '/exames' : '/farmacia')">
